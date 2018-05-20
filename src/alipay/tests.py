@@ -51,6 +51,22 @@ class AlipayTests(unittest.TestCase):
         self.assertIn('create_partner_trade_by_buyer',
                       self.alipay.create_partner_trade_by_buyer_url(**params))
 
+    def test_create_batch_trans_notify_url(self):
+        batch_list = ({'account': 'zjqq930112@sina.com',
+                       'name': u'姓名',
+                       'fee': '0.01',
+                       'note': 'test'},
+                      {'account': 'zjqq930112@sina.com',
+                       'name': u'姓名',
+                       'fee': '0.01',
+                       'note': 'test'})
+        params = {'batch_list': batch_list,
+                  'account_name': 'test_name',
+                  'batch_no': 'test_no',
+                  'notify_url': 'www.test.com'}
+        self.assertIn('batch_trans_notify',
+                      self.alipay.create_batch_trans_notify_url(**params))
+
     def test_trade_create_by_buyer_url(self):
         params = {'out_trade_no': '1',
                   'subject': 'test',
@@ -61,6 +77,28 @@ class AlipayTests(unittest.TestCase):
                   'quantity': 1}
         self.assertIn('trade_create_by_buyer',
                       self.alipay.trade_create_by_buyer_url(**params))
+
+    def test_create_forex_trade_url(self):
+        params = {'out_trade_no': '1',
+                  'subject': 'test',
+                  'logistics_type': 'POST',
+                  'logistics_fee': '0',
+                  'logistics_payment': 'SELLER_PAY',
+                  'price': '0.01',
+                  'quantity': 1}
+        self.assertIn('create_forex_trade',
+                      self.alipay.create_forex_trade_url(**params))
+
+    def test_create_forex_trade_wap_url(self):
+        params = {'out_trade_no': '1',
+                  'subject': 'test',
+                  'logistics_type': 'POST',
+                  'logistics_fee': '0',
+                  'logistics_payment': 'SELLER_PAY',
+                  'price': '0.01',
+                  'quantity': 1}
+        self.assertIn('create_forex_trade_wap',
+                      self.alipay.create_forex_trade_wap_url(**params))
 
     def test_send_goods_confirm_by_platform(self):
         params = {
@@ -132,7 +170,8 @@ class AlipayTests(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           self.wapalipay.trade_create_by_buyer_url, **params)
         self.assertRaises(NotImplementedError,
-                          self.wapalipay.create_partner_trade_by_buyer_url, **params)
+                          self.wapalipay.create_partner_trade_by_buyer_url,
+                          **params)
 
     def test_wap_unauthorization_token(self):
         from .exceptions import TokenAuthorizationError
@@ -142,7 +181,8 @@ class AlipayTests(unittest.TestCase):
                   'seller_account_name': self.wapalipay.seller_email,
                   'call_back_url': 'http://mydomain.com/alipay/callback'}
         self.assertRaises(TokenAuthorizationError,
-                          self.wapalipay.create_direct_pay_by_user_url, **params)
+                          self.wapalipay.create_direct_pay_by_user_url,
+                          **params)
 
     def test_wap_notifyurl(self):
         '''valid MD5 sign
@@ -156,3 +196,10 @@ class AlipayTests(unittest.TestCase):
                   'sign': '1f0a524dc51ed5bfc7ee2bac62e39534'}
         rt = self.wapalipay.verify_notify(**params)
         self.assertFalse(rt)
+
+    def test_single_trade_query(self):
+        ''' single_trade_query will response a ILLEGAL_PARTNER error xml document, like:
+        <?xml version="1.0" encoding="utf-8"?>
+        <alipay><is_success>F</is_success><error>ILLEGAL_PARTNER</error></alipay>
+        '''
+        self.assertIn('ILLEGAL_PARTNER', self.alipay.single_trade_query(out_trade_no='2015102012'))
